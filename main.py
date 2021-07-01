@@ -17,7 +17,6 @@ message = 0
 async def on_ready():
     print('We have logged in as ' + client.user.name)
     while True:
-        await checkup()
         await updateembed()
         time.sleep(60)
 
@@ -48,22 +47,6 @@ def loadconfig():
     basepromurl = config["prometheus"]["baseurl"]
 
 
-async def checkup():
-    r = requests.get(basepromurl + "up{job='infrared'}")
-    rjson = r.json()
-    if rjson["status"] == "success":
-        for key in rjson["data"]["result"]:
-            if "node" in key["metric"]:
-                name = key["metric"]["node"]
-                up = int(key["value"][1])
-                if up == 0:
-                    chan = client.get_channel(channel)
-                    embed = discord.Embed(title="Infrared offline: ", description=name, color=0xff0000)
-                    embed.set_footer(text="© Infrastat 2021")
-                    embed.timestamp = datetime.utcnow()
-                    await chan.send(embed=embed)
-
-
 async def updateembed():
     chan = client.get_channel(channel)
     msg = await chan.fetch_message(message)
@@ -78,7 +61,8 @@ async def updateembed():
     serverreq = requests.get(basepromurl + "sum by(host)(infrared_connected)").json()
     if serverreq["status"] == "success":
         for key in serverreq["data"]["result"]:
-            proxies[key["metric"]["host"]] = key["value"][1]
+            if int(key["value"][1]) != 0:
+                proxies[key["metric"]["host"]] = key["value"][1]
     proxies = dict(sorted(proxies.items(), reverse=True, key=lambda item: int(item[1])))
     serverlist = ""
     for key in proxies:
