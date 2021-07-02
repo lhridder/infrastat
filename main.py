@@ -91,11 +91,11 @@ async def updateembed():
 
     embed = discord.Embed(title="Infrared cluster", color=0x00ff00)
     embed.add_field(name="Total players", value=total, inline=False)
-    if serverlist is not "":
+    if serverlist != "":
         embed.add_field(name="Players per server", value=serverlist)
-    if proxylist is not "":
+    if proxylist != "":
         embed.add_field(name="Players per instance", value=proxylist)
-    if nginxlist is not "":
+    if nginxlist != "":
         embed.add_field(name="Nginx", value=nginxlist)
     embed.set_footer(text="© Infrastat 2021")
     embed.timestamp = datetime.utcnow()
