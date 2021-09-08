@@ -11,7 +11,7 @@ client = discord.Client()
 token = ""
 channel = 0
 message = 0
-
+logchannel = 0
 
 @client.event
 async def on_ready():
@@ -28,7 +28,7 @@ def checkconfig():
     except IOError:
         print("Config file doesn't exist yet, making one...")
         config = configparser.ConfigParser()
-        config['bot'] = {'token': '', 'channel': '', 'message': ''}
+        config['bot'] = {'token': '', 'channel': '', 'message': '', 'logchannel': ''}
         config['prometheus'] = {'baseurl': ''}
         with open('config.ini', 'w') as configfile:
             config.write(configfile)
@@ -38,18 +38,26 @@ def checkconfig():
 
 
 def loadconfig():
-    global token, basepromurl, channel, message
+    global token, basepromurl, channel, message, logchannel
     config = configparser.ConfigParser()
     config.read("config.ini")
     token = config["bot"]["token"]
     channel = int(config["bot"]["channel"])
     message = int(config["bot"]["message"])
     basepromurl = config["prometheus"]["baseurl"]
+    logchannel = int(config["bot"]["logchannel"])
 
 
 async def updateembed():
     chan = client.get_channel(channel)
     msg = await chan.fetch_message(message)
+    logchan= client.get_channel(logchannel)
+
+    upreq = requests.get(basepromurl + "up{job='infrared'}").json()
+    if upreq["status"] == "success":
+        for key in upreq["data"]["result"]:
+            if int(key["value"][1]) == 0:
+                await logchan.send("Infrared instance " + key["metric"]["instance"] + " offline!")
 
     totalreq = requests.get(basepromurl + "sum(infrared_connected)").json()
     total = 0
